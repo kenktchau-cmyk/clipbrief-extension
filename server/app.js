@@ -11,6 +11,7 @@ import { listModels, resolveProviderConfig } from './models.js';
 const root = fileURLToPath(new URL('../', import.meta.url));
 const assets = new Set(['panel.html', 'panel.css', 'panel.js', 'api.js', 'providers.js', 'core.js', 'extractor.js', 'demo.js', 'video-button-bridge.js', 'action-bars-preview.html', 'action-bars-preview.css', 'action-bars-preview.js', 'action-button.js', 'icons/16.png', 'icons/32.png', 'icons/48.png', 'icons/128.png']);
 for (const asset of ['setup.html', 'setup.css', 'setup.js', 'inline-summary.js', 'comments-preview.html', 'comments-preview.css', 'comments-preview.js']) assets.add(asset);
+for (const asset of ['capture.js', 'transcript-shortcut.js']) assets.add(asset);
 const mime = { '.html': 'text/html; charset=utf-8', '.css': 'text/css; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.png': 'image/png' };
 const MAX_BODY = 1500000;
 const extensionOrigin = value => /^chrome-extension:\/\/[a-p]{32}$/.test(value || '');

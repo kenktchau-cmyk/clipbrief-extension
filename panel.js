@@ -1,5 +1,6 @@
 import { formatTime, normalizeSegments, parseCaptions, transcriptLength, chunkTranscript, summaryMarkdown } from './core.js';
-import { extractVideo, seekVideo } from './extractor.js';
+import { seekVideo } from './extractor.js';
+import { captureVideo } from './capture.js';
 import { summarize, connectBackend, getLocalSession } from './api.js';
 import { demoVideo, demoSummary } from './demo.js';
 import { REQUEST_PREFIX, HANDLED_PREFIX, isSupportedVideoUrl } from './video-button-bridge.js';
@@ -105,11 +106,9 @@ async function capture(source = null) {
     if (!tab?.id) throw new Error('請先開啟影片分頁。');
     if (source && (tab.windowId !== source.windowId || tab.url !== source.url)) throw new Error('你撳選嘅影片頁面已切換，請喺新影片再按「片刻摘要」。');
     if (tab.url && !/^https?:/.test(tab.url)) throw new Error('呢個頁面唔支援擷取。請開啟一般影片網站，再按工具列嘅片刻圖示。');
-    const [injection] = await chrome.scripting.executeScript({ target: { tabId: tab.id }, world: 'MAIN', func: extractVideo });
-    if (!injection?.result) throw new Error('未能讀取頁面，請重新按工具列嘅片刻圖示再試。');
-    const data = injection.result;
+    const data = await captureVideo(chrome, tab, { onProgress: message => notice(message) });
     if (source && data.url !== source.url) throw new Error('影片已切換，請再按影片下方嘅「片刻摘要」。');
-    const segments = data.raw ? parseCaptions(data.raw) : normalizeSegments(data.segments);
+    const segments = data.segments;
     video = { title: String(data.title || '未命名影片').slice(0, 500), url: data.url, duration: data.duration, site: data.site, source: data.source, segments, tabId: tab.id };
     renderVideo();
     if (transcriptLength(segments) >= 40) notice(data.note || '字幕已就緒。你可以先喺下方檢視，再生成摘要。', 'success');

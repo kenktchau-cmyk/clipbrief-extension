@@ -8,6 +8,8 @@ initialize();
 chrome.runtime.onInstalled.addListener(initialize);
 chrome.runtime.onStartup.addListener(initialize);
 registerVideoButton(chrome);
+registerTranscriptShortcut(chrome);
+import { registerTranscriptShortcut } from './transcript-shortcut.js';
 import { registerVideoButton } from './video-button-bridge.js';
 import { restoreConfig } from './providers.js';
 

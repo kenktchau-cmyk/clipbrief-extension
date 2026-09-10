@@ -1,10 +1,11 @@
 // This entire function is serialized by chrome.scripting; keep helpers inside it.
 // Runs in the page world. It never receives API configuration or secrets.
-export async function extractVideo() {
+export async function extractVideo({ transcriptOnly = false, expectedVideoId = '' } = {}) {
   const originalUrl = location.href;
   const host = location.hostname;
   const isYouTube = /(^|\.)youtube\.com$/.test(host);
   const isBilibili = /(^|\.)bilibili\.com$/.test(host);
+  if (expectedVideoId && new URL(originalUrl).searchParams.get('v') !== expectedVideoId) throw new Error('影片頁面已切換，請重新擷取。');
   const site = isYouTube ? 'YouTube' : isBilibili ? 'Bilibili' : host;
   const clean = v => String(v ?? '').replace(/\s+/g, ' ').trim();
   const video = [...document.querySelectorAll('video')].sort((a, b) => b.clientWidth * b.clientHeight - a.clientWidth * a.clientHeight)[0];
@@ -34,7 +35,7 @@ export async function extractVideo() {
   });
 
   // Native text tracks are usable on standard HTML5 players without site adapters.
-  if (video?.textTracks) {
+  if (!transcriptOnly && video?.textTracks) {
     const tracks = [...video.textTracks].filter(t => ['subtitles', 'captions'].includes(t.kind));
     for (const track of rank(tracks).slice(0, 2)) {
       const mode = track.mode;
@@ -55,7 +56,7 @@ export async function extractVideo() {
     let player;
     try { player = document.querySelector('#movie_player')?.getPlayerResponse?.(); } catch { /* Not all players expose this. */ }
     if (player?.videoDetails?.videoId !== id) player = window.ytInitialPlayerResponse;
-    if (player?.videoDetails?.videoId === id) {
+    if (!transcriptOnly && player?.videoDetails?.videoId === id) {
       const tracks = rank(player.captions?.playerCaptionsTracklistRenderer?.captionTracks ?? []);
       for (const track of tracks.slice(0, 2)) {
         try {
@@ -67,15 +68,16 @@ export async function extractVideo() {
         } catch { /* Timed text may require opening the transcript in the player. */ }
       }
     }
-    const rows = [...document.querySelectorAll('ytd-transcript-segment-renderer')].filter(e => e.getClientRects().length);
+    const transcriptPanel = [...document.querySelectorAll('ytd-engagement-panel-section-list-renderer[target-id="engagement-panel-searchable-transcript"]')].find(e => e.getAttribute('visibility') !== 'ENGAGEMENT_PANEL_VISIBILITY_HIDDEN' && !e.closest('[hidden]') && e.getClientRects().length);
+    const rows = [...(transcriptPanel?.querySelectorAll('ytd-transcript-segment-renderer') || [])].filter(e => e.getClientRects().length);
     if (rows.length) {
-      const time = text => clean(text).split(':').reduce((n, p) => n * 60 + Number(p), 0);
+      const time = text => /^\d+(?::\d{2}){1,2}$/.test(clean(text)) ? clean(text).split(':').reduce((n, p) => n * 60 + Number(p), 0) : null;
       result.segments = rows.map(row => ({ start: time(row.querySelector('.segment-timestamp')?.textContent), text: clean(row.querySelector('.segment-text')?.textContent) }));
       result.source = 'YouTube 已開啟嘅逐字稿';
       result.note = '來自頁面目前載入嘅逐字稿，請確認已包含完整影片。';
       return finish();
     }
-    result.note = '可先喺 YouTube 影片描述區開啟「顯示轉錄稿」，再按重新擷取；仍然失敗可貼上字幕。';
+    result.note = '未讀到可用嘅 YouTube 轉錄稿。影片可能未提供字幕，或頁面未載入完成；可以重試或貼上字幕。';
   } else if (isBilibili) {
     // Bilibili's player metadata is not a public, stable API; this is best effort.
     const state = window.__INITIAL_STATE__;
@@ -99,7 +101,7 @@ export async function extractVideo() {
   }
 
   // Same-origin VTT/SRT files are a final fallback when native cues are not loaded.
-  for (const track of [...(video?.querySelectorAll('track[kind="subtitles"],track[kind="captions"]') ?? [])].slice(0, 2)) {
+  for (const track of [...(!transcriptOnly && video?.querySelectorAll('track[kind="subtitles"],track[kind="captions"]') || [])].slice(0, 2)) {
     try {
       const raw = await read(track.src);
       if (raw.trim()) { result.raw = raw; result.source = `字幕檔 · ${track.srclang || 'HTML5'}`; return finish(); }

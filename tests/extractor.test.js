@@ -14,6 +14,15 @@ function fixture(url, extra = {}) {
 }
 const run = context => vm.runInNewContext(`(${extractVideo.toString()})()`, context);
 
+test('transcript-only retry reads visible panel rows and timestamps without fetching captions', async () => {
+  const context = fixture('https://www.youtube.com/watch?v=abc');
+  const row = { getClientRects: () => [1], querySelector: selector => ({ textContent: selector === '.segment-timestamp' ? '1:34' : '自動取得字幕' }) };
+  const panel = { getAttribute: () => 'ENGAGEMENT_PANEL_VISIBILITY_EXPANDED', closest: () => null, getClientRects: () => [1], querySelectorAll: () => [row] };
+  context.document.querySelectorAll = selector => selector.startsWith('ytd-engagement-panel') ? [panel] : [];
+  const result = await vm.runInNewContext(`(${extractVideo.toString()})({transcriptOnly:true,expectedVideoId:'abc'})`, context);
+  assert.equal(result.segments[0].start, 94); assert.equal(result.segments[0].text, '自動取得字幕');
+});
+
 test('serialized extractor reads native cues and restores disabled track mode', async () => {
   const track = { kind: 'subtitles', mode: 'disabled', language: 'zh', cues: [{ startTime: 12, text: '  Test caption  ' }] };
   const video = { clientWidth: 600, clientHeight: 300, duration: 240, textTracks: [track] };
