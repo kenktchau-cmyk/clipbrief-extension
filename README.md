@@ -1,123 +1,125 @@
 # 片刻 ClipBrief 0.8.1
 
-Chrome Manifest V3 影片摘要擴充功能。讀取 YouTube、Bilibili 或一般 HTML5 影片嘅可讀字幕，生成內容簡介、重點及時間軸。YouTube／Bilibili 會喺留言區最頂顯示摘要卡，按時間可以跳返影片。
+[English](README.md) | [繁體中文](README.zh-TW.md)
 
-支援 **Google Gemma／Gemini** 及 **OpenAI Chat Completions 相容 API**。每位使用者喺自己嘅本機後端設定供應商、API 網址、模型同 Key。原始碼、Chrome 擴充功能及下載包均唔包含使用者金鑰。
+A Chrome Manifest V3 extension that summarizes readable captions from YouTube, Bilibili, and other HTML5 videos into an overview, key points, and a timeline. On YouTube and Bilibili, a summary card appears above the comments, with timestamps that seek to the corresponding point in the video.
 
-## 安裝與設定
+Supports **Google Gemma / Gemini** and **OpenAI Chat Completions-compatible APIs**. Each user configures their own provider, API URL, model, and key in the local backend. The source code, Chrome extension, and download packages contain no user API keys.
 
-1. 下載或 clone 呢個儲存庫，準備 Node.js 24.5 或以上版本。無 npm 依賴，毋須編譯。
-2. 喺儲存庫根目錄啟動本機後端：
+## Installation and setup
+
+1. Download or clone this repository and install Node.js 24.5 or later. No npm dependencies or build step are required.
+2. Start the local backend from the repository root:
 
    ```sh
    node --use-system-ca scripts/preview.mjs
    ```
 
-3. 開啟 [本機 API 設定頁](http://127.0.0.1:4173/setup.html)，選擇供應商／API 格式，填入網址及自己嘅 Key，按「讀取可用模型」，喺下拉選單揀模型（或手動輸入 ID），再按「儲存到本機後端」。保存後立即生效，Key 欄位會清空。
-4. 按「複製插件連線碼」。
-5. 用 Chrome 120 或以上版本打開 `chrome://extensions`，啟用開發人員模式，按「載入未封裝項目」，選擇儲存庫根目錄（包含 `manifest.json`）。亦可以用 `python scripts/package.py` 產生嘅 `clipbrief-extension-0.8.1.zip`，先解壓再載入。
-6. 打開片刻側邊欄 → 齒輪「後端設定」→ 貼上連線碼 →「連接並儲存後端」，授權本機網址。
-7. 開啟 YouTube／Bilibili 影片，按讚好／分享操作列嘅「片刻摘要」。其他網站用 Chrome 工具列嘅片刻图示，再按「擷取目前影片」。
-8. 檢視字幕、選語言及長度，再按「生成影片摘要」。YouTube／Bilibili 生成完成後，摘要同時間軸會自動顯示喺留言區上方。
+3. Open the [local API setup page](http://127.0.0.1:4173/setup.html). Choose the provider / API format and enter the URL and your key. Click “讀取可用模型” (fetch available models), select a model from the dropdown or enter its ID manually, then click “儲存到本機後端” (save to local backend). Changes take effect immediately after saving, and the key field is cleared.
+4. Click “複製插件連線碼” (copy extension connection code).
+5. In Chrome 120 or later, open `chrome://extensions`, enable Developer mode, click **Load unpacked**, and select the repository root containing `manifest.json`. Alternatively, generate `clipbrief-extension-0.8.1.zip` with `python scripts/package.py`, extract it, and load that directory.
+6. Open the ClipBrief sidebar, select the gear icon and “後端設定” (backend settings), paste the connection code, and click “連接並儲存後端” (connect and save backend). Grant access to the local URL.
+7. Open a YouTube or Bilibili video and click “片刻摘要” in the like/share action bar. On other sites, click the ClipBrief icon in Chrome's toolbar, then “擷取目前影片” (capture current video).
+8. Review the captions, choose an output language and length, and click “生成影片摘要” (generate video summary). On YouTube and Bilibili, the completed summary and timeline appear automatically above the comments.
 
-要更換 AI，喺片刻齒輪設定按「輸入／更新自己嘅 API Key」，或直接開啟本機設定頁。切換供應商或網址時需要重新輸入對應 Key，唔會自動沿用另一間供應商嘅金鑰。
+To switch AI services, choose “輸入／更新自己嘅 API Key” (enter or update your own API key) in the gear settings, or open the local setup page directly. Changing the provider or URL requires the corresponding key; a key from another provider is never reused automatically.
 
-同一 API 已有後端 Key 時可以留空 Key，直接讀取清單或更換模型。讀取清單唔會改動已儲存設定，選模型後仍需按儲存。切換供應商、網址或輸入新 Key 會清除舊清單並取消舊查詢。
+If the backend already has a key for the same API, leave the key field blank to fetch the model list or change models. Fetching the list does not change saved settings: save after selecting a model. Changing the provider or URL, or entering a new key, clears the old list and cancels the previous query.
 
-Google 清單使用官方 `models.list` 並篩選支援 `generateContent` 嘅模型；OpenAI 相容服務使用基底網址嘅 `/models`。清單唔保證模型適用文字 Chat Completions、已有生成權限或額度，請選文字對話模型。API 未提供清單、清單為空或查詢失敗時可手動輸入 ID。查詢最多 20 秒、10 頁、5,000 個模型，每頁回覆最多 4 MiB；超過頁數／數量會標示部分清單。
+Google model discovery uses the official `models.list` endpoint and filters for models supporting `generateContent`. OpenAI-compatible services use `/models` under the base URL. Listing a model does not guarantee that it supports text Chat Completions or that your account has generation access or quota; select a text chat model. Enter an ID manually if the API has no model list, returns an empty list, or the query fails. Queries are limited to 20 seconds, 10 pages, and 5,000 models, with a maximum response size of 4 MiB per page. Results are marked as partial if the page or model limit is reached.
 
-後端必須保持運行。每次後端重啟，連線碼都會更新，請重新複製到 Chrome 擴充功能。呢個連線碼只授權本機摘要服務，唔係供應商 API Key。
+Keep the backend running. Its connection code changes on every restart, so copy the new code into the Chrome extension. This code authorizes access to the local summary service; it is not a provider API key.
 
-## 支援嘅 API
+## Supported APIs
 
-| 選項 | 設定方式 |
+| Option | Configuration |
 | --- | --- |
-| Google · Gemma / Gemini | 使用 Google 原生 Gemini API，網址固定為官方 `https://generativelanguage.googleapis.com/v1beta`。預設模型 `gemma-4-26b-a4b-it`，亦可填入自己可存取嘅 Gemma／Gemini 模型 ID。 |
-| OpenAI | 預填 `https://api.openai.com/v1`；填入帳戶可使用、支援 Chat Completions 嘅模型 ID 及 Key。 |
-| 自訂 · OpenAI 相容 API | 自行填入供應商嘅 API 基底網址、模型及 Key，例如 DeepSeek、OpenRouter 等相容服務。後端會呼叫 `/chat/completions`。 |
+| Google · Gemma / Gemini | Uses Google's native Gemini API at the fixed official URL `https://generativelanguage.googleapis.com/v1beta`. The default model is `gemma-4-26b-a4b-it`; you can enter another Gemma / Gemini model ID that your account can access. |
+| OpenAI | Prefills `https://api.openai.com/v1`. Enter your key and a model ID that your account can use with Chat Completions. |
+| Custom · OpenAI-compatible API | Enter the provider's API base URL, model, and key, for example for compatible services such as DeepSeek or OpenRouter. The backend calls `/chat/completions`. |
 
-API 網址使用 HTTPS；只有 `localhost`／`127.0.0.1` 可用 HTTP。網址唔可以帶帳密、查詢參數或 fragment。「強制 JSON 模式」預設關閉，只喺所選模型支援時開啟。即使關閉，提示仍會要求 JSON，並驗證摘要結構。
+API URLs must use HTTPS, except that `localhost` and `127.0.0.1` may use HTTP. URLs cannot contain credentials, query parameters, or fragments. “強制 JSON 模式” (force JSON mode) is off by default; enable it only if the selected model supports it. Even when it is off, the prompt requests JSON and the summary structure is validated.
 
-自訂 API 需要相容 Chat Completions 嘅 `messages`、Bearer 驗證及 `choices[].message.content` 回覆格式；唔代表任意 API 協定都支援。原生 Anthropic Messages、Responses-only 模型等協定目前未整合。模型權限、上下文限制、額度及收費按所選供應商及帳戶而定；保存設定只驗證格式及安全儲存，實際生成先會驗證連線及模型權限。
+Custom APIs must support Chat Completions `messages`, Bearer authentication, and the `choices[].message.content` response format. Other API protocols are not automatically supported: native Anthropic Messages and Responses-only models are not integrated. Model access, context limits, quota, and pricing depend on the selected provider and account. Saving settings validates their format and stores them securely; actual connectivity and model access are checked when generating a summary.
 
-## 自動取得轉錄稿與快捷鍵
+## Automatic transcripts and keyboard shortcut
 
-0.8.1 修正 YouTube 新版「字幕記錄」：同時辨認 `PAmodern_transcript_view`／`transcript-segment-view-model` 及舊版轉錄稿。已開啟嘅字幕記錄會優先讀取；自動打開時會等候字幕列數短暫穩定先擷取。
+Version 0.8.1 fixes support for YouTube's new transcript interface, recognizing both `PAmodern_transcript_view` / `transcript-segment-view-model` and the older transcript layout. An already-open transcript takes priority. When opening one automatically, extraction waits briefly for the number of caption rows to stabilize.
 
-以用戶提供嘅影片 `04fjBk7KqII` 實際 DOM 驗證，新版選擇器讀到 123 段、7,180 字元，時間標記由 0:00 至 16:24。呢次係真實頁面讀取驗證，未代表已完成 Comet 已安裝插件嘅端對端測試。
+Verification against the real DOM of the user-provided video `04fjBk7KqII` extracted 123 segments and 7,180 characters, with timestamps from 0:00 to 16:24. This verified reading a real page; it did not complete an end-to-end test of the installed extension in Comet.
 
-按 YouTube 影片下方「片刻摘要」或側邊欄「擷取目前影片」，會先讀取可用字幕；字幕不足時自動展開影片說明、打開轉錄稿、等候文字載入，再擷取文字同時間標記。毋須先手動開啟轉錄稿，亦唔會自動將字幕送去 AI；按「生成影片摘要」先會發出 AI 請求。只讀取頁面已載入嘅內容，長影片請確認完整度。影片無字幕或網站未能載入時，仍可重試或手動匯入。
+Clicking “片刻摘要” below a YouTube video or “擷取目前影片” (capture current video) in the sidebar first reads available captions. If they are insufficient, the extension expands the video description, opens the transcript, waits for text to load, and extracts text and timestamps. You do not need to open the transcript manually. Captions are sent to AI only after clicking “生成影片摘要” (generate video summary). Only content already loaded on the page is read, so check completeness for long videos. If captions are unavailable or the site fails to load them, retry or import a transcript manually.
 
-喺 YouTube 一般影片頁按 **Alt + Shift + T**，片刻會展開影片說明並打開「顯示轉錄稿」。已打開時會捲動到轉錄稿，唔會將佢關閉。呢個操作唔需要 AI Key，唔會生成摘要。
+Press **Alt + Shift + T** on a regular YouTube video page to expand the description and open **Show transcript**. If the transcript is already open, the extension scrolls to it without closing it. This action needs no AI key and does not generate a summary.
 
-自訂快捷鍵：Comet 網址列輸入 `comet://extensions/shortcuts`（Chrome 用 `chrome://extensions/shortcuts`），喺「片刻 ClipBrief」下面修改「打開 YouTube 轉錄稿」。如果預設組合已被其他程式使用，請喺呢頁另設組合。
+To customize the shortcut, open `comet://extensions/shortcuts` in Comet or `chrome://extensions/shortcuts` in Chrome. Under “片刻 ClipBrief”, change “打開 YouTube 轉錄稿” (open YouTube transcript). Choose another combination there if the default conflicts with another application.
 
-升級後，喺 `comet://extensions`／`chrome://extensions` 按片刻卡片嘅重新載入，再重新整理 YouTube。若未安裝，先按上面步驟載入最新目錄。
+After upgrading, reload the ClipBrief extension card at `comet://extensions` / `chrome://extensions`, then refresh YouTube. If the extension is not installed, load the latest directory using the installation steps above.
 
-快捷鍵只適用於 YouTube `/watch` 影片頁，暫不支援 Shorts、Bilibili 或其他網站。影片須提供轉錄稿；等候約 12 秒仍未搵到時會顯示提示。優先辨認 YouTube 轉錄稿區塊，亦支援繁體、簡體及英文按鈕文字；YouTube 改版可能需要更新。重複按鍵唔會重複開啟，切換影片會取消舊操作。
+The shortcut works only on YouTube `/watch` pages, not Shorts, Bilibili, or other sites. The video must provide a transcript; a message appears if none is found after about 12 seconds. Detection prioritizes YouTube's transcript container and also supports Traditional Chinese, Simplified Chinese, and English button labels. YouTube layout changes may require updates. Repeated key presses do not open duplicate transcripts, and switching videos cancels the previous operation.
 
-## 留言區摘要與其他功能
+## Summary cards and other features
 
-- 留言區最頂嘅摘要卡同時顯示影片簡介、內容重點及時間軸，可收起展開；按時間定位播放器。
-- 摘要卡只喺使用者自己嘅瀏覽器顯示，**唔會發布成留言**。唔會影響原有留言。
-- 留言區延遲載入或被網站重新建立時會自動補回摘要卡，避免重複。切換影片或 Bilibili 分 P 會移除舊摘要，避免對錯影片。
-- YouTube／Bilibili 影片操作列加入「片刻摘要」按鈕；按鈕只打開側邊欄及讀取字幕，按「生成」先發送 AI 請求。
-- 繁體中文、廣東話或英文輸出；精簡、標準及詳細長度。
-- TXT、SRT、VTT、字幕 JSON 匯入，或手動貼上逐字稿。
-- 最多 180,000 字元；長字幕分段整理再合併，生成前顯示預計請求次數。
-- 取消生成、複製摘要、匯出 Markdown。
-- 固定示範標示「內置示範」，真實 AI 生成嘅示範字幕摘要標示「AI 實測」。
+- A collapsible card above the comments displays the overview, key points, and timeline. Click a timestamp to seek the player.
+- The card is visible only in your own browser and **is not posted as a comment**. Existing comments are unaffected.
+- If the comments load late or the site rebuilds them, the card is reinserted without duplicates. Switching videos or Bilibili parts removes the old summary to avoid displaying it for the wrong video.
+- A “片刻摘要” button is added to YouTube and Bilibili video action bars. It opens the sidebar and reads captions; an AI request starts only after clicking Generate.
+- Output in Traditional Chinese, Cantonese, or English, with concise, standard, and detailed lengths.
+- Import TXT, SRT, VTT, or subtitle JSON, or paste a transcript manually.
+- Up to 180,000 characters. Long captions are summarized in chunks and merged; the estimated request count is shown before generation.
+- Cancel generation, copy the summary, or export Markdown.
+- Static examples are labeled “內置示範” (built-in demo). Summaries generated by a real AI service from demo captions are labeled “AI 實測” (live AI test).
 
-| 網站 | 字幕來源與限制 |
+| Site | Caption sources and limitations |
 | --- | --- |
-| YouTube | 目前影片字幕軌；讀唔到時自動打開轉錄稿再擷取。受登入、簽署網址、頁面載入及網站改版影響，失敗可手動貼上。 |
-| Bilibili | 目前 BV／av 影片及分 P 字幕資料；可能受登入、風控或網站改版影響。可匯入字幕。 |
-| 一般 HTML5 網站 | 主框架播放器 TextTrack 或可讀字幕檔；跨域 iframe、自訂播放器或無字幕影片可能需要手動逐字稿。一般網站暫無留言區摘要卡。 |
+| YouTube | Caption tracks for the current video, with automatic transcript opening and extraction as a fallback. Login requirements, signed URLs, page loading, and site changes can affect access. Paste a transcript manually if extraction fails. |
+| Bilibili | Caption data for the current BV / av video and part. Login requirements, anti-abuse controls, or site changes may interfere. Subtitle import is available. |
+| Other HTML5 sites | The main-frame player's TextTrack or readable subtitle files. Cross-origin iframes, custom players, or videos without captions may require a manual transcript. Comment-area summary cards are not currently supported on these sites. |
 
-本版係字幕摘要，未有畫面分析或自動錄音轉錄。請檢查擷取嘅字幕是否完整。時間軸只保留可以核對輸入字幕嘅時間值。留言區關閉或網站未提供可辨認容器時，仍可以喺側邊欄閱讀摘要。重載頁面後需重新生成摘要。
+This version summarizes captions; it does not analyze video frames or automatically record and transcribe audio. Check that the extracted captions are complete. The timeline retains only timestamps that can be verified against the input captions. If comments are disabled or no recognizable container is available, the summary remains readable in the sidebar. Regenerate the summary after reloading the page.
 
-## 金鑰與資料流
+## API keys and data flow
 
 ```text
-影片頁 → 片刻側邊欄 → 本機後端 → 你選擇嘅 AI API
-  ↑                       ↑
-留言區摘要卡       API 設定及金鑰只由後端保存
+Video page → ClipBrief sidebar → Local backend → Your selected AI API
+    ↑                                 ↑
+Summary card above comments    API settings and keys stay in the backend
 ```
 
-- Windows 用 DPAPI 加密整份供應商設定，存於 `server/.secrets/provider-config.dpapi`，綁定目前 Windows 帳戶。API Key 經 stdin 交畀加密程序，唔放命令列或暫存明文檔。
-- macOS／Linux 經設定頁提供嘅設定只保留喺後端記憶體，後端關閉後需重新輸入。Google 亦可由執行環境注入 `GEMINI_API_KEY`；Windows 若已有加密供應商設定，以該設定為先。
-- 相容舊版本 `google-key.dpapi`。升級至多 API 設定後，以新嘅 `provider-config.dpapi` 為先。舊 PowerShell 設定指令僅供未建立多 API 設定嘅 Google 初始配置使用。
-- Key 輸入欄位只位於獨立本機設定頁；讀取清單時送到本機 `/api/models`，儲存時送到 `/api/provider` 並清空欄位，無 localStorage／sessionStorage。讀取清單唔會保存新 Key；Chrome 插件及影片頁唔會收到供應商 Key。
-- 設定端點驗證同來源、特定 header 及連線碼；其他網站、甚至持有連線碼嘅 Chrome 擴充功能都無法修改供應商設定。
-- 摘要請求只接受標題、字幕同輸出選項。供應商、網址、模型及 Key 由後端管理，摘要客戶端唔可以覆蓋。
-- 後端只監聽 `127.0.0.1`，驗證 Host、Origin、連線碼、資料大小，同時最多一個摘要工作，每小時最多 30 個工作。
-- 靜態服務只提供明確列出嘅介面檔案；後端原始碼、`.secrets`、`.env`、`.git`、日誌、ZIP 及路徑穿越請求均無法由網站讀取。
-- Git 同 ZIP 排除金鑰、日誌及本機資料。Chrome CSP 只允許連接本機後端；Chrome local storage 只保存後端網址及連線碼，唔會同步金鑰到 Google 帳戶。
-- 無遙測或雲端歷史，字幕同摘要唔寫入後端磁碟。AI 請求唔帶浏览器 Cookie、唔跟隨重新導向；讀取影片字幕時會用原網站播放所需權限。
-- 取消會中止後端工作，但已送出請求仍可能計費。每位使用者使用自己帳戶嘅額度。
+- On Windows, DPAPI encrypts the entire provider configuration at `server/.secrets/provider-config.dpapi`, bound to the current Windows account. API keys are passed to the encryption process through stdin, never as command-line arguments or temporary plaintext files.
+- On macOS / Linux, settings entered through the setup page stay only in backend memory and must be entered again after shutdown. Google also supports the `GEMINI_API_KEY` environment variable. On Windows, an existing encrypted provider configuration takes precedence.
+- The legacy `google-key.dpapi` format remains supported. After configuring multiple APIs, the new `provider-config.dpapi` takes precedence. The old PowerShell setup command is only for initial Google configuration before a multi-API configuration exists.
+- Key fields exist only on the separate local setup page. Fetching models sends the key to local `/api/models`; saving sends it to `/api/provider` and clears the field. Keys are not stored in localStorage or sessionStorage. Fetching a list does not save a new key. The Chrome extension and video page never receive the provider key.
+- Configuration endpoints validate the same origin, a specific header, and the connection code. Other websites, and even a Chrome extension holding the connection code, cannot change provider settings.
+- Summary requests accept only the title, captions, and output options. The backend manages the provider, URL, model, and key; summary clients cannot override them.
+- The backend listens only on `127.0.0.1` and validates Host, Origin, the connection code, and payload size. It permits one concurrent summary job and up to 30 jobs per hour.
+- Static serving exposes only an explicit list of interface files. Backend source, `.secrets`, `.env`, `.git`, logs, ZIP files, and path-traversal requests cannot be read through the web server.
+- Git and ZIP packages exclude keys, logs, and local data. Chrome's CSP permits connections only to the local backend. Chrome local storage keeps only the backend URL and connection code; keys are not synced to a Google account.
+- There is no telemetry or cloud history. Captions and summaries are not written to backend disk. AI requests carry no browser cookies and do not follow redirects; caption retrieval uses the permissions needed to play content on the original site.
+- Cancellation aborts the backend job, but requests already sent may still be billed. Each user consumes their own account's quota.
 
-## 開發、打包與驗證
+## Development, packaging, and validation
 
 ```sh
 node --test tests/*.test.js
 python scripts/package.py
 ```
 
-輸出到 `artifacts/`：Chrome 客戶端 ZIP 同後端完整程式 ZIP，均使用指定檔案清單並檢查金鑰模式。要重製圖示可執行 `scripts/icons.py`（需 Pillow），一般安裝及啟動唔需要。
+Packages are written to `artifacts/`: a Chrome client ZIP and a complete backend source ZIP. Both use explicit file lists and scan for key patterns. Regenerate icons with `scripts/icons.py` if needed; this requires Pillow, which is not needed for normal installation or startup.
 
-後端啟動後可以開啟：
+With the backend running, open:
 
-- [多 API 設定頁](http://127.0.0.1:4173/setup.html)
-- [摘要側邊欄預覽](http://127.0.0.1:4173/panel.html?demo=1)
-- [YouTube／Bilibili 操作列預覽](http://127.0.0.1:4173/action-bars-preview.html)
-- [留言區摘要與時間軸預覽](http://127.0.0.1:4173/comments-preview.html)
+- [Multi-API setup](http://127.0.0.1:4173/setup.html)
+- [Summary sidebar preview](http://127.0.0.1:4173/panel.html?demo=1)
+- [YouTube / Bilibili action-bar preview](http://127.0.0.1:4173/action-bars-preview.html)
+- [Comment-area summary and timeline preview](http://127.0.0.1:4173/comments-preview.html)
 
-67 項自動化測試已通過，包括字幕、分段合併、Google／OpenAI 格式、後端 HTTP、設定權限、金鑰隔離、模型清單分頁與限制、同一服務先可沿用 Key、切換失敗保留原有設定、錯誤遮罩、限流、取消及影片身份驗證。自動擷取同轉錄稿快捷鍵測試涵蓋直接字幕、無字幕時自動開啟再擷取、來源分頁、展開說明、已開啟處理、缺少字幕、不同語言按鈕、重複操作及切換影片取消；以模擬 DOM 驗證，未完成 Comet 真實影片快捷鍵端對端測試。Windows 加密配置保存及解密亦用獨立合成資料驗證。瀏覽器預覽確認時間軸 `1:34` 會設定播放器到 94 秒、切換影片移除舊卡、重複更新只保留一張卡。
+The project has passed 67 automated tests covering captions, chunking and merging, Google / OpenAI formats, backend HTTP, configuration permissions, key isolation, model-list pagination and limits, key reuse restricted to the same service, preservation of settings after a failed switch, error masking, rate limits, cancellation, and video identity validation. Automatic extraction and transcript shortcut tests cover direct captions, opening and extracting a transcript when captions are missing, the source tab, expanding the description, an already-open transcript, missing captions, button labels in different languages, repeated actions, and cancellation on video changes. These tests use a mock DOM; a real-video shortcut end-to-end test in Comet has not been completed. Windows encrypted configuration saving and decryption were also verified separately with synthetic data. Browser previews confirmed that clicking `1:34` seeks to 94 seconds, changing videos removes the old card, and repeated updates leave only one card.
 
-Google Gemma 4 已用內置字幕經本機後端完成真實摘要。模型選單亦已用後端已存 Key 實測讀取 Google 清單，並確認手動輸入及切換服務清除舊清單。其他 API 以模擬回覆驗證，未使用真實供應商帳戶逐一測試。實際 Chrome 安裝及真實 YouTube／Bilibili 完整端對端測試尚未完成；網站 DOM 改版可能需要更新選擇器。未上架 Chrome Web Store。
+Google Gemma 4 has generated a real summary from the built-in captions through the local backend. The model dropdown was also tested against Google's real model list using the backend's saved key, including manual ID entry and clearing the old list when switching services. Other APIs were verified with mocked responses, not individually tested with real provider accounts. Actual Chrome installation and full end-to-end tests on real YouTube / Bilibili videos remain incomplete. Site DOM changes may require selector updates. The extension is not published on the Chrome Web Store.
 
-模型清單官方文件：[Google models.list](https://ai.google.dev/api/models)、[OpenAI List models](https://developers.openai.com/api/reference/resources/models/methods/list)。
+Official model-list documentation: [Google models.list](https://ai.google.dev/api/models), [OpenAI List models](https://developers.openai.com/api/reference/resources/models/methods/list).
 
-主要檔案：`panel.js` 使用者流程；`api.js` 本機客戶端；`server/app.js` 後端驗證；`server/ai-provider.js` API 轉換；`server/key-store.js` 加密保存；`setup.*` API 設定頁；`inline-summary.js` 留言區卡片；`action-button.js` 影片操作列入口；`extractor.js` 字幕讀取；`core.js` 字幕及摘要格式。
+Main files: `panel.js` — user flow; `api.js` — local client; `server/app.js` — backend validation; `server/ai-provider.js` — API adaptation; `server/key-store.js` — encrypted storage; `setup.*` — API setup page; `inline-summary.js` — comment-area card; `action-button.js` — video action-bar entry point; `extractor.js` — caption extraction; `core.js` — caption and summary formats.
 
-官方文件：[Google Gemma](https://ai.google.dev/gemma/docs/core/gemma_on_gemini_api)、[OpenAI Chat Completions](https://developers.openai.com/api/reference/resources/chat/subresources/completions/methods/create)、[DeepSeek](https://api-docs.deepseek.com/)、[OpenRouter](https://openrouter.ai/docs/api/reference/overview)、[Chrome Tabs](https://developer.chrome.com/docs/extensions/reference/api/tabs)、[Node Child Process](https://nodejs.org/docs/latest-v24.x/api/child_process.html)。
+Official documentation: [Google Gemma](https://ai.google.dev/gemma/docs/core/gemma_on_gemini_api), [OpenAI Chat Completions](https://developers.openai.com/api/reference/resources/chat/subresources/completions/methods/create), [DeepSeek](https://api-docs.deepseek.com/), [OpenRouter](https://openrouter.ai/docs/api/reference/overview), [Chrome Tabs](https://developer.chrome.com/docs/extensions/reference/api/tabs), [Node Child Process](https://nodejs.org/docs/latest-v24.x/api/child_process.html).
