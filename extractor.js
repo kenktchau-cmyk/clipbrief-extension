@@ -53,6 +53,33 @@ export async function extractVideo({ transcriptOnly = false, expectedVideoId = '
 
   if (isYouTube) {
     const id = new URL(originalUrl).searchParams.get('v') || location.pathname.split('/').at(-1);
+    const readTranscript = () => {
+      // YouTube currently serves both Polymer transcripts and the modern view-model UI.
+      const panels = document.querySelectorAll('ytd-engagement-panel-section-list-renderer[target-id="PAmodern_transcript_view"], ytd-engagement-panel-section-list-renderer[target-id="engagement-panel-searchable-transcript"]');
+      for (const panel of panels) {
+        if (panel.getAttribute('visibility') === 'ENGAGEMENT_PANEL_VISIBILITY_HIDDEN' || panel.closest('[hidden], [aria-hidden="true"]') || !panel.getClientRects().length) continue;
+        const rows = [...panel.querySelectorAll('ytd-transcript-segment-renderer, transcript-segment-view-model')].filter(row => row.getClientRects().length);
+        const time = value => {
+          const text = clean(value);
+          if (!/^\d+(?::\d{2}){1,2}$/.test(text)) return null;
+          const parts = text.split(':').map(Number);
+          return parts.slice(1).some(part => part >= 60) ? null : parts.reduce((total, part) => total * 60 + part, 0);
+        };
+        const segments = rows.map(row => ({
+          start: time((row.querySelector('.segment-timestamp') || row.querySelector('.ytwTranscriptSegmentViewModelTimestamp'))?.textContent),
+          text: clean((row.querySelector('.segment-text') || row.querySelector('span.ytAttributedStringHost[role="text"]'))?.textContent)
+        })).filter(segment => segment.text);
+        if (segments.length) {
+          result.segments = segments;
+          result.source = 'YouTube 字幕記錄';
+          result.note = '來自頁面目前載入嘅字幕記錄，請確認已包含完整影片。';
+          return true;
+        }
+      }
+      return false;
+    };
+    // Already-open transcripts should not wait for a timed-text request to fail.
+    if (readTranscript()) return finish();
     let player;
     try { player = document.querySelector('#movie_player')?.getPlayerResponse?.(); } catch { /* Not all players expose this. */ }
     if (player?.videoDetails?.videoId !== id) player = window.ytInitialPlayerResponse;
@@ -68,15 +95,7 @@ export async function extractVideo({ transcriptOnly = false, expectedVideoId = '
         } catch { /* Timed text may require opening the transcript in the player. */ }
       }
     }
-    const transcriptPanel = [...document.querySelectorAll('ytd-engagement-panel-section-list-renderer[target-id="engagement-panel-searchable-transcript"]')].find(e => e.getAttribute('visibility') !== 'ENGAGEMENT_PANEL_VISIBILITY_HIDDEN' && !e.closest('[hidden]') && e.getClientRects().length);
-    const rows = [...(transcriptPanel?.querySelectorAll('ytd-transcript-segment-renderer') || [])].filter(e => e.getClientRects().length);
-    if (rows.length) {
-      const time = text => /^\d+(?::\d{2}){1,2}$/.test(clean(text)) ? clean(text).split(':').reduce((n, p) => n * 60 + Number(p), 0) : null;
-      result.segments = rows.map(row => ({ start: time(row.querySelector('.segment-timestamp')?.textContent), text: clean(row.querySelector('.segment-text')?.textContent) }));
-      result.source = 'YouTube 已開啟嘅逐字稿';
-      result.note = '來自頁面目前載入嘅逐字稿，請確認已包含完整影片。';
-      return finish();
-    }
+    if (readTranscript()) return finish();
     result.note = '未讀到可用嘅 YouTube 轉錄稿。影片可能未提供字幕，或頁面未載入完成；可以重試或貼上字幕。';
   } else if (isBilibili) {
     // Bilibili's player metadata is not a public, stable API; this is best effort.

@@ -23,6 +23,24 @@ test('transcript-only retry reads visible panel rows and timestamps without fetc
   assert.equal(result.segments[0].start, 94); assert.equal(result.segments[0].text, '自動取得字幕');
 });
 
+test('modern PAmodern_transcript_view reads text and timestamps and ignores hidden legacy transcripts', async () => {
+  const context = fixture('https://www.youtube.com/watch?v=04fjBk7KqII');
+  const makeRow = (time, text) => ({
+    getClientRects: () => [1],
+    querySelector: selector => selector === '.ytwTranscriptSegmentViewModelTimestamp' ? { textContent: time } : selector === 'span.ytAttributedStringHost[role="text"]' ? { textContent: text } : null
+  });
+  const rows = [makeRow('0:00', '新版字幕開始'), makeRow('16:24', '新版字幕結尾'), makeRow('1:99', '無效時間仍保留文字')];
+  const panel = { getAttribute: () => 'ENGAGEMENT_PANEL_VISIBILITY_EXPANDED', closest: () => null, getClientRects: () => [1], querySelectorAll: selector => selector.includes('transcript-segment-view-model') ? rows : [] };
+  const hidden = { ...panel, getAttribute: () => 'ENGAGEMENT_PANEL_VISIBILITY_HIDDEN', querySelectorAll: () => { throw new Error('Must not read hidden legacy panel'); } };
+  context.document.querySelectorAll = selector => selector.includes('PAmodern_transcript_view') ? [hidden, panel] : [];
+  // An already-open modern transcript must win over a slow/blocked caption URL.
+  context.window.ytInitialPlayerResponse = { videoDetails: { videoId: '04fjBk7KqII' }, captions: { playerCaptionsTracklistRenderer: { captionTracks: [{ baseUrl: 'https://www.youtube.com/api/timedtext?v=04fjBk7KqII' }] } } };
+  const result = await run(context);
+  assert.equal(result.segments.length, 3); assert.equal(result.segments[0].start, 0);
+  assert.equal(result.segments[1].start, 984); assert.equal(result.segments[1].text, '新版字幕結尾');
+  assert.equal(result.segments[2].start, null); assert.equal(result.raw, '');
+});
+
 test('serialized extractor reads native cues and restores disabled track mode', async () => {
   const track = { kind: 'subtitles', mode: 'disabled', language: 'zh', cues: [{ startTime: 12, text: '  Test caption  ' }] };
   const video = { clientWidth: 600, clientHeight: 300, duration: 240, textTracks: [track] };

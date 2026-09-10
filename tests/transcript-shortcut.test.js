@@ -20,12 +20,12 @@ test('shortcut manifest registers a customizable command and injection only targ
   assert.equal(injections[1].target.tabId, 8);
 });
 
-function fixture({ alreadyOpen = false, unavailable = false, changeVideo = false, label = '顯示轉錄稿', semanticSection = true } = {}) {
+function fixture({ alreadyOpen = false, unavailable = false, changeVideo = false, label = '顯示轉錄稿', semanticSection = true, modern = false } = {}) {
   let open = alreadyOpen, expanded = false, clicks = 0, expands = 0, scrolls = 0, notice;
   const visible = { closest: () => null, getClientRects: () => [1], getAttribute: () => null };
   const button = { ...visible, textContent: label, click: () => { clicks++; open = true; } };
   const expand = { ...visible, click: () => { expands++; expanded = true; } };
-  const panel = { ...visible, scrollIntoView: () => { scrolls++; }, querySelectorAll: () => [{ querySelector: () => ({ textContent: '字幕已載入' }) }] };
+  const panel = { ...visible, scrollIntoView: () => { scrolls++; }, querySelectorAll: selector => !modern || selector.includes('transcript-segment-view-model') ? [{ querySelector: textSelector => !modern || textSelector === 'span.ytAttributedStringHost[role="text"]' ? { textContent: '字幕已載入' } : null }] : [] };
   const section = { querySelectorAll: () => [button] };
   const description = {
     querySelector: selector => selector === '#expand' ? expand : expanded && !unavailable && semanticSection ? section : null,
@@ -37,7 +37,7 @@ function fixture({ alreadyOpen = false, unavailable = false, changeVideo = false
     URL, location, getComputedStyle: () => ({ visibility: 'visible' }),
     window: { addEventListener: (name, fn) => listeners.set(name, fn), removeEventListener: name => listeners.delete(name) },
     document: {
-      querySelectorAll: () => open ? [panel] : [], querySelector: () => description,
+      querySelectorAll: selector => open && (!modern || selector.includes('PAmodern_transcript_view')) ? [panel] : [], querySelector: () => description,
       createElement: () => { notice = { style: {}, setAttribute() {}, remove() { this.removed = true; } }; return notice; }, body: { append() {} }
     },
     setTimeout: (fn, ms) => {
@@ -55,6 +55,12 @@ test('automatic capture waits for transcript rows without scrolling away from th
   const f = fixture();
   assert.equal((await vm.runInNewContext(`(${openYouTubeTranscript.toString()})('original',{waitForRows:true})`, f.context)).status, 'opened');
   assert.equal(f.stats().clicks, 1); assert.equal(f.stats().scrolls, 0);
+});
+
+test('automatic opening recognizes modern transcript panels and waits for their text rows', async () => {
+  const f = fixture({ modern: true, semanticSection: false, label: '字幕記錄' });
+  assert.equal((await vm.runInNewContext(`(${openYouTubeTranscript.toString()})('original',{waitForRows:true})`, f.context)).status, 'opened');
+  assert.equal(f.stats().clicks, 1); assert.equal(f.stats().expands, 1);
 });
 
 test('serialized shortcut expands the description then opens its transcript exactly once', async () => {

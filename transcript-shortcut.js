@@ -36,7 +36,7 @@ export async function openYouTubeTranscript(expectedVideoId, { waitForRows = fal
   const state = { videoId: expectedVideoId, running: true };
   window[slot] = state;
   const visible = element => element && !element.closest('[hidden], [aria-hidden="true"]') && element.getClientRects().length && getComputedStyle(element).visibility !== 'hidden';
-  const panelSelector = 'ytd-engagement-panel-section-list-renderer[target-id="engagement-panel-searchable-transcript"]';
+  const panelSelector = 'ytd-engagement-panel-section-list-renderer[target-id="PAmodern_transcript_view"], ytd-engagement-panel-section-list-renderer[target-id="engagement-panel-searchable-transcript"]';
   const getPanel = () => [...document.querySelectorAll(panelSelector)].find(panel => panel.getAttribute('visibility') !== 'ENGAGEMENT_PANEL_VISIBILITY_HIDDEN' && visible(panel));
   const notice = document.createElement('div');
   notice.id = 'clipbrief-transcript-status';
@@ -63,13 +63,16 @@ export async function openYouTubeTranscript(expectedVideoId, { waitForRows = fal
     noticeTimer = setTimeout(state.cleanup, status === 'opened' ? 2500 : 7000);
     return { status };
   };
-  const clicked = new Set(); let expanded = false;
+  const clicked = new Set(); let expanded = false, lastRowCount = 0, stableRows = 0;
   try {
     for (let attempt = 0; attempt < 48; attempt++) {
       if (currentVideo() !== expectedVideoId || window[slot] !== state) { state.cleanup(); return { status: 'navigated' }; }
       const panel = getPanel();
       if (panel) {
-        const ready = !waitForRows || [...panel.querySelectorAll('ytd-transcript-segment-renderer')].some(row => row.querySelector('.segment-text')?.textContent?.trim());
+        const rows = [...panel.querySelectorAll('ytd-transcript-segment-renderer, transcript-segment-view-model')].filter(row => (row.querySelector('.segment-text') || row.querySelector('span.ytAttributedStringHost[role="text"]'))?.textContent?.trim());
+        stableRows = rows.length && rows.length === lastRowCount ? stableRows + 1 : 0;
+        lastRowCount = rows.length;
+        const ready = !waitForRows || stableRows >= 2;
         if (ready) {
           if (!waitForRows) panel.scrollIntoView({ behavior: 'instant', block: 'nearest' });
           return finish('opened', waitForRows ? '片刻：轉錄稿已載入，正在擷取字幕。' : '片刻：已打開轉錄稿。');
@@ -84,7 +87,7 @@ export async function openYouTubeTranscript(expectedVideoId, { waitForRows = fal
         const transcriptButton = [...(section || description).querySelectorAll('button, [role="button"]')].find(button => {
           if (clicked.has(button) || button.disabled || button.getAttribute('aria-disabled') === 'true' || !visible(button)) return false;
           const label = (button.getAttribute('aria-label') || button.textContent || '').trim().replace(/\s+/g, ' ');
-          return section || /^(?:show transcript|顯示轉錄稿|显示转录稿|顯示逐字稿|显示文字稿|顯示文字稿)$/i.test(label);
+          return section || /^(?:show transcript|顯示轉錄稿|显示转录稿|顯示逐字稿|显示文字稿|顯示文字稿|字幕記錄|字幕记录|顯示字幕記錄|显示字幕记录)$/i.test(label);
         });
         if (transcriptButton) { clicked.add(transcriptButton); transcriptButton.click(); }
         else if (!expanded) {

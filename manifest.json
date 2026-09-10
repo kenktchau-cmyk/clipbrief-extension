@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "片刻 ClipBrief — 影片重點助手",
   "description": "為影片字幕生成重點摘要及時間軸，顯示於留言區上方。支援 Google 及 OpenAI 相容 API，金鑰由本機後端保管。",
-  "version": "0.8.0",
+  "version": "0.8.1",
   "commands": {
     "open-youtube-transcript": {
       "suggested_key": { "default": "Alt+Shift+T" },
