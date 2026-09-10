@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>設定你嘅 API · 片刻 ClipBrief</title><link rel="stylesheet" href="setup.css"></head>
+<body>
+  <main class="setup-card">
+    <a class="brand" href="panel.html?demo=1"><span>▸</span> 片刻 <small>CLIPBRIEF</small></a>
+    <p class="eyebrow">YOUR KEY. YOUR BACKEND.</p>
+    <h1>連接你嘅 AI。</h1>
+    <p class="intro">揀你嘅 AI 供應商，填入 API 網址、模型同 Key。設定由呢部電腦嘅後端保管，唔會存入 Chrome 插件。</p>
+    <div class="model"><span>已設定模型</span><strong id="current-model">尚未連接</strong></div>
+    <p id="key-status" class="status" role="status">正在連接本機後端…</p>
+    <form id="key-form" autocomplete="off">
+      <label for="provider">AI 供應商／API 格式</label>
+      <select id="provider"><option value="google">Google · Gemma / Gemini</option><option value="openai">OpenAI</option><option value="custom">自訂 · OpenAI 相容 API</option></select>
+      <p id="provider-help" class="hint">Google 使用原生 Gemini API。其他相容服務可選自訂。</p>
+      <label for="api-endpoint">API 基底網址</label><input id="api-endpoint" type="url" required value="https://generativelanguage.googleapis.com/v1beta" readonly>
+      <label for="api-model">模型名稱</label><input id="api-model" required maxlength="160" value="gemma-4-26b-a4b-it" placeholder="填入供應商提供嘅模型 ID">
+      <label for="google-key">API Key</label>
+      <input id="google-key" type="password" required autocomplete="off" spellcheck="false" maxlength="4096" placeholder="貼上所選供應商嘅 API Key" aria-describedby="key-note">
+      <p id="key-note" class="hint">只喺設定時送到本機後端，提交後即清空欄位。Windows 會加密保存；其他系統只保留到後端關閉。</p>
+      <a class="help-link" href="https://aistudio.google.com/api-keys" target="_blank" rel="noopener noreferrer">前往 Google AI Studio 取得 Key ↗</a>
+      <label class="checkbox"><input id="json-mode" type="checkbox">強制 JSON 模式（只喺模型支援時開啟）</label>
+      <button id="save-key" class="primary" type="submit" disabled>儲存到本機後端 ↗</button>
+      <p id="save-status" class="status" role="status" aria-live="polite"></p>
+    </form>
+    <section class="next-step">
+      <h2>下一步，連接 Chrome 插件</h2>
+      <p>複製本機連線碼，貼到片刻側邊欄嘅「後端設定」。每次後端重啟，連線碼都會更新。</p>
+      <button id="copy-token" class="secondary" type="button" disabled>複製插件連線碼</button>
+      <a class="preview-link" href="panel.html?demo=1">試吓生成摘要 →</a>
+      <p id="copy-status" class="status" role="status"></p>
+    </section>
+    <p class="footnote">支援 Google 原生 API 同 OpenAI Chat Completions 相容格式，包括 DeepSeek、OpenRouter 等相容服務。每位使用者提供自己嘅 Key，API 用量由所選供應商計算。</p>
+  </main>
+  <script type="module" src="setup.js"></script>
+</body>
+</html>

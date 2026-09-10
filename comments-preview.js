@@ -1,0 +1,12 @@
+import { demoSummary } from './demo.js';
+const fixture = document.getElementById('fixture'), comments = document.getElementById('comments');
+let site = 'youtube', id = 1;
+const loc = { href: 'https://www.youtube.com/watch?v=preview1' }, events = new EventTarget();
+const doc = { documentElement: fixture, createElement: tag => document.createElement(tag), getElementById: value => fixture.querySelector(`#${value}`), querySelector: selector => fixture.querySelector(selector), querySelectorAll: selector => selector.includes('comments') || selector === '#comment' ? [comments] : fixture.querySelectorAll(selector) };
+const card = installClipBriefInlineSummary({ doc, loc, events, runtime: null });
+const status = document.getElementById('preview-status');
+const show = () => { card.show(structuredClone(demoSummary), loc.href); status.textContent = `${site === 'youtube' ? 'YouTube' : 'Bilibili'} 留言區示意 · 內置示範摘要`; };
+document.getElementById('show-summary').addEventListener('click', show);
+document.getElementById('switch-site').addEventListener('click', () => { site = site === 'youtube' ? 'bilibili' : 'youtube'; loc.href = site === 'youtube' ? `https://www.youtube.com/watch?v=preview${id}` : `https://www.bilibili.com/video/BVpreview${id}/`; document.getElementById('switch-site').textContent = site === 'youtube' ? '切換 Bilibili 示意' : '切換 YouTube 示意'; show(); });
+document.getElementById('navigate-video').addEventListener('click', () => { id++; loc.href = site === 'youtube' ? `https://www.youtube.com/watch?v=preview${id}` : `https://www.bilibili.com/video/BVpreview${id}/`; events.dispatchEvent(new Event('popstate')); status.textContent = '已切換影片。舊摘要會清除，請按顯示示範摘要重新生成。'; });
+show();

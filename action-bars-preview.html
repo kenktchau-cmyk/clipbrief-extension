@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="zh-HK"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>片刻 · 影片操作列預覽</title><link rel="stylesheet" href="action-bars-preview.css"></head>
+<body>
+  <main>
+    <div class="eyebrow">CLIPBRIEF / ON THE VIDEO PAGE</div>
+    <h1>喺你睇影片嘅地方，<br><em>留低重點。</em></h1>
+    <p class="intro">「片刻摘要」直接加入影片下方操作列。按一下，開啟摘要側邊欄。</p>
+    <div class="preview-note">操作列示意 · 使用真實擴充功能按鈕程式 · Gemma 4 經本機後端生成摘要 · 金鑰由後端保管</div>
+    <section class="site-section" aria-label="YouTube 操作列示意">
+      <div class="section-top"><h2><span class="youtube-mark">▶</span> YouTube</h2><button id="theme">切換深色示意</button></div>
+      <div id="youtube-fixture" class="fixture"><ytd-watch-metadata><div id="top-level-buttons-computed" class="youtube-actions">
+        <span class="native-pill"><svg viewBox="0 0 24 24"><path d="M7 10v10H3V10h4Zm0 0 5-8c2 0 2 2 1 6h6c2 0 2 2 1 4l-2 7a2 2 0 0 1-2 1H7"/></svg>588<span class="divider"></span><svg viewBox="0 0 24 24"><path d="M7 14V4H3v10h4Zm0 0 5 8c2 0 2-2 1-6h6c2 0 2-2 1-4l-2-7a2 2 0 0 0-2-1H7"/></svg></span>
+        <span class="native-pill"><svg viewBox="0 0 24 24"><path d="m14 3 8 7-8 7v-5C7 12 4 15 2 20c0-9 4-13 12-13V3Z"/></svg>分享</span>
+        <span class="native-pill"><svg viewBox="0 0 24 24"><path d="M5 3h14v19l-7-4-7 4V3Z"/></svg>儲存</span>
+        <span class="native-pill"><svg viewBox="0 0 24 24"><path d="M12 2v15m-6-6 6 6 6-6M3 21h18"/></svg>下載</span>
+      </div><span class="native-pill more" aria-hidden="true">•••</span></ytd-watch-metadata></div>
+      <p class="caption">同一行操作，同一個觀看節奏。淺色、深色主題都融入原有介面。</p>
+    </section>
+    <section class="site-section" aria-label="Bilibili 操作列示意">
+      <div class="section-top"><h2><span class="bilibili-mark">▤</span> Bilibili</h2><span class="section-detail">影片下方 · 分享旁邊</span></div>
+      <div id="bilibili-fixture" class="fixture"><div class="video-toolbar"><div class="video-toolbar-left">
+        <span class="native-bili"><svg viewBox="0 0 24 24"><path d="M7 10v10H3V10h4Zm0 0 5-8c2 0 2 2 1 6h6c2 0 2 2 1 4l-2 7a2 2 0 0 1-2 1H7"/></svg>415</span>
+        <span class="native-bili"><span class="coin">币</span>39</span>
+        <span class="native-bili"><svg viewBox="0 0 24 24"><path d="M12 2 15.1 8.3 22 9.3 17 14.2 18.2 21 12 17.8 5.8 21 7 14.2 2 9.3 8.9 8.3Z"/></svg>300</span>
+        <span class="native-bili"><svg viewBox="0 0 24 24"><path d="m14 3 8 7-8 7v-5C7 12 4 15 2 20c0-9 4-13 12-13V3Z"/></svg>73</span>
+      </div></div></div>
+      <p class="caption">保留原有嘅讚好、投幣、收藏同分享；新增一個摘要入口。</p>
+    </section>
+    <div id="preview-status" role="status" aria-live="polite">試吓按上面任何一個「片刻摘要」。</div>
+    <div class="qa-actions"><button id="remount">模擬操作列重新載入</button><span id="button-count"></span><a href="panel.html?demo=1">完整側邊欄示範 ↗</a></div>
+  </main>
+  <aside id="sidebar-preview" hidden><div class="sidebar-toolbar"><span>片刻側邊欄示範</span><button id="close-sidebar" aria-label="關閉側邊欄示範">×</button></div><iframe id="sidebar-frame" title="片刻摘要側邊欄示範"></iframe></aside>
+  <script src="action-button.js"></script><script src="action-bars-preview.js"></script>
+</body></html>
+

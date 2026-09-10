@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="zh-HK">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light"><title>片刻 ClipBrief</title>
+  <link rel="stylesheet" href="panel.css">
+</head>
+<body>
+  <div class="app">
+    <header class="header">
+      <a class="brand" href="panel.html" aria-label="片刻首頁"><span class="logo" aria-hidden="true">▸</span><span>片刻<span class="brand-en">CLIPBRIEF</span></span></a>
+      <button id="settings-open" class="icon-button" aria-label="後端設定" title="後端設定"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M9.6 3h4.8l.6 2.5 2 .9 2.3-.7 2.4 4.1-1.8 1.9v2.4l1.8 1.7-2.4 4.1-2.5-.7-1.8 1-.6 2.3H9.6L9 20.2l-2-1-2.3.7-2.4-4.1 1.8-1.7v-2.4L2.3 9.8l2.4-4.1 2.3.7 2-.9L9.6 3Z" transform="translate(0 -1) scale(1 .96)"/><circle cx="12" cy="11.5" r="3"/></svg></button>
+    </header>
+    <main>
+      <div id="preview-banner" class="preview-banner" hidden>互動預覽 · 自選 AI · 金鑰由後端保管</div>
+      <div class="eyebrow"><span class="small-line"></span> LESS WATCHING. MORE KNOWING.</div>
+      <h1>長影片，<span>短時間掌握。</span></h1>
+      <p class="intro">留住值得記低嘅每一個重點。</p>
+
+      <section class="video-card" aria-label="目前影片">
+        <div class="video-art" aria-hidden="true"><span class="orbit one"></span><span class="orbit two"></span><span class="art-play">▶</span><span class="art-label">THE BIG PICTURE,<br>IN A LITTLE MOMENT.</span><span id="video-duration" class="duration">片刻</span></div>
+        <div class="video-info"><div class="video-meta"><span id="video-site" class="site-tag">目前分頁</span><span id="video-state">等待擷取</span></div><h2 id="video-title">由一條影片開始</h2><p id="video-hint">打開影片頁面，再按「擷取目前影片」。</p></div>
+        <button id="capture" class="capture-button"><span aria-hidden="true">↻</span> 擷取目前影片</button>
+      </section>
+
+      <div id="notice" class="notice" role="status" aria-live="polite" hidden></div>
+      <section class="controls" aria-label="摘要選項">
+        <div class="section-heading"><h2>你想點樣睇？</h2><span class="micro-label">MAKE IT YOURS</span></div>
+        <div class="option-row"><label for="language">輸出語言</label><select id="language"><option value="zh-Hant">繁體中文</option><option value="yue">廣東話</option><option value="en">English</option></select></div>
+        <div class="option-row length-row"><span id="length-label">摘要長度</span><div id="length-options" class="segmented" role="group" aria-labelledby="length-label"><button data-length="short" aria-pressed="false">精簡</button><button data-length="standard" class="selected" aria-pressed="true">標準</button><button data-length="detailed" aria-pressed="false">詳細</button></div></div>
+      </section>
+      <button id="generate" class="primary" disabled><span aria-hidden="true">✦</span><span id="generate-label">生成影片摘要</span><span aria-hidden="true">↗</span></button>
+      <button id="cancel" class="secondary full" hidden>取消生成</button>
+      <p id="send-note" class="privacy-note">準備好字幕，再交畀你選擇嘅 AI 整理。</p>
+      <p id="ai-status" class="privacy-note" aria-live="polite"></p>
+      <div id="progress" class="progress" hidden><div class="progress-track"><div id="progress-fill"></div></div><p id="progress-text" aria-live="polite"></p></div>
+
+      <section id="results" class="results" hidden aria-label="影片摘要">
+        <div class="result-heading"><div><span class="eyebrow">YOUR MOMENT OF CLARITY</span><h2>幫你整理好喇。</h2></div><span id="result-badge" class="ready-badge">已完成</span></div>
+        <div class="tabs" role="tablist" aria-label="摘要內容"><button id="tab-summary" role="tab" aria-selected="true" aria-controls="summary-panel" data-tab="summary">重點摘要</button><button id="tab-timeline" role="tab" aria-selected="false" aria-controls="timeline-panel" data-tab="timeline" tabindex="-1">時間軸 <span id="chapter-count">0</span></button></div>
+        <div id="summary-panel" role="tabpanel" aria-labelledby="tab-summary"><div class="brief-card"><span class="mini-star" aria-hidden="true">✦</span><h3>一段話，睇明白</h3><p id="brief"></p></div><h3 class="points-title">值得記低</h3><ol id="points" class="points"></ol></div>
+        <div id="timeline-panel" role="tabpanel" aria-labelledby="tab-timeline" hidden><p class="timeline-hint">按時間標記，返到影片嗰一刻。</p><div id="chapters" class="chapters"></div></div>
+        <div class="export-actions"><button id="copy" class="secondary">複製摘要</button><button id="download" class="secondary">匯出 Markdown <span aria-hidden="true">↓</span></button></div>
+        <p class="result-note">根據字幕整理，AI 內容可能有誤，重要資訊請對照原片。</p>
+      </section>
+
+      <details id="transcript-details" class="transcript-details"><summary><span>字幕內容</span><span class="detail-hint">檢視 · 貼上 · 匯入 <span aria-hidden="true">＋</span></span></summary><div class="transcript-body"><p id="source-label">未載入字幕。支援純文字、SRT、VTT 及字幕 JSON。</p><label class="sr-only" for="transcript">字幕或逐字稿</label><textarea id="transcript" rows="8" placeholder="貼上字幕，或者帶時間嘅逐字稿：&#10;0:00 今日我哋會講…&#10;1:20 第一個重點係…"></textarea><div class="transcript-actions"><label class="secondary file-label" for="subtitle-file">匯入字幕檔<input id="subtitle-file" type="file" accept=".txt,.srt,.vtt,.json,text/plain"></label><button id="apply-transcript" class="secondary">使用呢段字幕</button></div><p id="transcript-count" class="muted"></p></div></details>
+      <button id="demo" class="demo-button">未有影片？睇吓摘要示範 <span aria-hidden="true">→</span></button>
+    </main>
+    <footer><span><i class="status-dot"></i> 為你嘅好奇心，慳返啲時間。</span><span>片刻 v0.6</span></footer>
+  </div>
+
+  <dialog id="settings" aria-labelledby="settings-title">
+    <form id="settings-form">
+      <div class="dialog-heading"><div><span class="eyebrow">KEYS STAY SERVER-SIDE</span><h2 id="settings-title">連接本機後端</h2></div><button type="button" id="settings-close" class="icon-button" aria-label="關閉設定">×</button></div>
+      <p class="dialog-intro">API Key 留喺後端。支援 Google、OpenAI 同自訂相容 API，由後端呼叫你設定嘅模型。</p>
+      <a id="backend-setup" href="http://127.0.0.1:4173/setup.html" target="_blank" rel="noopener noreferrer" class="secondary full">輸入／更新自己嘅 API Key ↗</a>
+      <label for="endpoint">本機後端網址</label><input id="endpoint" type="url" required value="http://127.0.0.1:4173">
+      <label for="model">後端模型</label><input id="model" readonly value="gemma-4-26b-a4b-it">
+      <label for="connection-token">後端連線碼</label><input id="connection-token" type="password" required autocomplete="off" spellcheck="false" placeholder="從後端預覽頁複製連線碼">
+      <p class="field-note">呢個連線碼只用嚟存取本機摘要服務。喺後端預覽頁開啟設定、複製，再貼到 Chrome 擴充功能。後端重啟後需重新複製。</p>
+      <button type="button" id="copy-connection" class="secondary full" hidden>複製連線碼畀擴充功能</button>
+      <p id="settings-error" class="error-text" role="alert"></p>
+      <button id="settings-submit" type="submit" class="primary">連接並儲存後端 ↗</button>
+      <button type="button" id="forget-key" class="text-button">清除本機連線設定</button>
+    </form>
+  </dialog>
+  <script type="module" src="panel.js"></script>
+</body>
+</html>
+
+
+
