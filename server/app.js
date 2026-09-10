@@ -6,6 +6,7 @@ import { resolve, extname } from 'node:path';
 import { chunkTranscript, MAX_TRANSCRIPT } from '../core.js';
 import { summarize } from './summarizer.js';
 import { DEFAULT_CONFIG, validateProviderConfig, publicProviderConfig } from './ai-provider.js';
+import { listModels, resolveProviderConfig } from './models.js';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
 const assets = new Set(['panel.html', 'panel.css', 'panel.js', 'api.js', 'providers.js', 'core.js', 'extractor.js', 'demo.js', 'video-button-bridge.js', 'action-bars-preview.html', 'action-bars-preview.css', 'action-bars-preview.js', 'action-button.js', 'icons/16.png', 'icons/32.png', 'icons/48.png', 'icons/128.png']);
@@ -44,14 +45,14 @@ async function readJson(req, limit = MAX_BODY) {
   try { return JSON.parse(Buffer.concat(chunks).toString('utf8')); } catch { throw fail(400, 'JSON 格式無效。'); }
 }
 
-export function createBackend({ key = '', providerConfig = null, token = randomBytes(32).toString('hex'), runSummary = summarize, maxJobsPerHour = 30, saveKey = null, saveConfig = null } = {}) {
+export function createBackend({ key = '', providerConfig = null, token = randomBytes(32).toString('hex'), runSummary = summarize, runModels = listModels, maxJobsPerHour = 30, saveKey = null, saveConfig = null } = {}) {
   const config = providerConfig ? validateProviderConfig(providerConfig) : { ...DEFAULT_CONFIG, key };
   const expectedToken = Buffer.from(`Bearer ${token}`);
   const authorized = req => {
     const actual = Buffer.from(req.headers.authorization || '');
     return actual.length === expectedToken.length && timingSafeEqual(actual, expectedToken);
   };
-  let active = false, updatingKey = false, recent = [];
+  let active = false, updatingKey = false, listing = false, recent = [];
   const server = http.createServer(async (req, res) => {
     res.setHeader('Cache-Control', 'no-store');
     res.setHeader('X-Content-Type-Options', 'nosniff');
@@ -84,13 +85,28 @@ export function createBackend({ key = '', providerConfig = null, token = randomB
           if (!ownUi) return json(res, 403, { error: '只可喺本機後端設定頁讀取供應商設定。' });
           return json(res, 200, publicProviderConfig(config));
         }
+        if (path === '/api/models') {
+          if (!ownUi) return json(res, 403, { error: '只可喺本機後端設定頁讀取模型清單。' });
+          const payload = await readJson(req, 8192);
+          if (!exactKeys(payload, ['provider', 'endpoint', 'key'])) throw fail(400, '模型查詢資料格式無效。');
+          let next;
+          try { next = resolveProviderConfig({ ...payload, model: 'model' }, config); } catch (error) { throw fail(400, error.message); }
+          if (listing || updatingKey) return json(res, 409, { error: '後端正在讀取或更新設定，請稍後再試。' });
+          listing = true;
+          const controller = new AbortController(), abort = () => controller.abort();
+          res.on('close', abort);
+          try { const result = await runModels(next, { signal: controller.signal }); if (!res.destroyed) json(res, 200, result); }
+          catch (error) { if (!res.destroyed) json(res, [502, 504].includes(error.status) ? error.status : 502, { error: [502, 504].includes(error.status) ? error.message : '未能讀取模型清單，請稍後重試或手動輸入。' }); }
+          finally { next.key = ''; payload.key = ''; listing = false; res.off('close', abort); }
+          return;
+        }
         if (path === '/api/provider') {
           if (!ownUi) return json(res, 403, { error: '只可喺本機後端設定頁修改供應商。' });
           if (!saveConfig) return json(res, 503, { error: '後端未啟用供應商設定。' });
           const payload = await readJson(req, 8192);
           if (!exactKeys(payload, ['provider', 'endpoint', 'model', 'key', 'jsonMode'])) throw fail(400, '供應商資料格式無效。');
           let next;
-          try { next = validateProviderConfig(payload); } catch (error) { throw fail(400, error.message); }
+          try { next = resolveProviderConfig(payload, config); } catch (error) { throw fail(400, error.message); }
           if (active || updatingKey) return json(res, 409, { error: '後端忙碌中，請稍後再設定。' });
           updatingKey = true;
           try {

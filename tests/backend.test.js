@@ -7,6 +7,24 @@ import { summarize as clientSummary, connectBackend } from '../api.js';
 import { restoreConfig, getApiTarget } from '../providers.js';
 import { saveBackendKey } from '../server/key-store.js';
 
+test('model lookup is restricted to own UI and never saves draft credentials; same-service model changes reuse saved key', async t => {
+  const current = { provider: 'openai', endpoint: 'https://example.test/v1', model: 'old', key: 'synthetic-model-key', jsonMode: false };
+  let calls = 0, saves = 0;
+  const { endpoint } = await setup(t, { providerConfig: current, runModels: async config => { calls++; assert.equal(config.key, current.key); return { models: [{ id: 'new', name: 'New' }], truncated: false }; }, saveConfig: async config => { saves++; assert.equal(config.key, current.key); assert.equal(config.model, 'new'); return { storage: 'memory' }; } });
+  const hdrs = { ...headers, Origin: endpoint, 'X-ClipBrief-UI': '1' };
+  const query = { provider: current.provider, endpoint: current.endpoint, key: '' };
+  const request = (path, body, h = hdrs) => fetch(endpoint + path, { method: 'POST', headers: h, body: JSON.stringify(body) });
+  for (const h of [headers, { ...hdrs, Origin: `chrome-extension://${'a'.repeat(32)}` }, { ...hdrs, Authorization: '' }]) assert.ok([401, 403].includes((await request('/api/models', query, h)).status));
+  assert.equal(calls, 0);
+  assert.equal((await request('/api/models', { ...query, endpoint: 'https://other.test/v1' })).status, 400);
+  assert.equal((await request('/api/models', { ...query, model: 'forbidden' })).status, 400);
+  const response = await request('/api/models', query); assert.equal(response.status, 200); assert.ok(!(await response.text()).includes(current.key));
+  assert.equal(calls, 1); assert.equal(saves, 0);
+  assert.equal((await connectBackend({ endpoint, token })).model, 'old');
+  assert.equal((await request('/api/provider', { ...query, model: 'new', jsonMode: false })).status, 200);
+  assert.equal(saves, 1); assert.equal((await connectBackend({ endpoint, token })).model, 'new');
+});
+
 const token = 'a'.repeat(64), key = 'synthetic-upstream-secret';
 const video = { title: 'Test', segments: [{ start: 0, text: '字幕內容'.repeat(30) }] };
 const options = { language: 'yue', length: 'short' };

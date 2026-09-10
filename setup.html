@@ -14,11 +14,17 @@
       <select id="provider"><option value="google">Google · Gemma / Gemini</option><option value="openai">OpenAI</option><option value="custom">自訂 · OpenAI 相容 API</option></select>
       <p id="provider-help" class="hint">Google 使用原生 Gemini API。其他相容服務可選自訂。</p>
       <label for="api-endpoint">API 基底網址</label><input id="api-endpoint" type="url" required value="https://generativelanguage.googleapis.com/v1beta" readonly>
-      <label for="api-model">模型名稱</label><input id="api-model" required maxlength="160" value="gemma-4-26b-a4b-it" placeholder="填入供應商提供嘅模型 ID">
       <label for="google-key">API Key</label>
       <input id="google-key" type="password" required autocomplete="off" spellcheck="false" maxlength="4096" placeholder="貼上所選供應商嘅 API Key" aria-describedby="key-note">
-      <p id="key-note" class="hint">只喺設定時送到本機後端，提交後即清空欄位。Windows 會加密保存；其他系統只保留到後端關閉。</p>
+      <p id="key-note" class="hint">Key 只送到本機後端。讀取清單唔會儲存設定；按儲存後會清空欄位。Windows 加密保存，其他系統只保留到後端關閉。</p>
       <a class="help-link" href="https://aistudio.google.com/api-keys" target="_blank" rel="noopener noreferrer">前往 Google AI Studio 取得 Key ↗</a>
+      <div class="model-picker">
+        <div class="picker-heading"><label for="available-models">可用模型</label><button id="load-models" class="secondary" type="button" disabled>讀取可用模型 ↻</button></div>
+        <select id="available-models" aria-describedby="models-status"><option value="">手動輸入模型 ID…</option></select>
+        <p id="models-status" class="status" role="status" aria-live="polite">按「讀取可用模型」，由你嘅 API 取得清單。</p>
+        <label for="api-model" id="model-label">模型 ID（手動輸入）</label><input id="api-model" required maxlength="160" value="gemma-4-26b-a4b-it" placeholder="填入供應商提供嘅模型 ID">
+        <p class="hint">清單由供應商提供，請揀支援文字對話嘅模型。列出模型唔代表已有生成權限或額度；揀好後按儲存先會生效。</p>
+      </div>
       <label class="checkbox"><input id="json-mode" type="checkbox">強制 JSON 模式（只喺模型支援時開啟）</label>
       <button id="save-key" class="primary" type="submit" disabled>儲存到本機後端 ↗</button>
       <p id="save-status" class="status" role="status" aria-live="polite"></p>

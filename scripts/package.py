@@ -10,6 +10,7 @@ client = ['manifest.json', 'background.js', 'panel.html', 'panel.css', 'panel.js
 client.append('inline-summary.js')
 backend = client + ['setup.html', 'setup.css', 'setup.js', 'action-bars-preview.html', 'action-bars-preview.css', 'action-bars-preview.js', 'package.json', '.gitignore', 'server/app.js', 'server/key-store.js', 'server/summarizer.js', 'server/ai-provider.js', 'server/read-secret.ps1', 'server/set-key.ps1', 'scripts/preview.mjs', 'scripts/package.py', 'scripts/check-key-store.mjs'] + sorted(p.relative_to(root).as_posix() for p in (root / 'tests').glob('*.test.js'))
 backend += ['comments-preview.html', 'comments-preview.css', 'comments-preview.js']
+backend.append('server/models.js')
 artifacts = root / 'artifacts'
 artifacts.mkdir(exist_ok=True)
 for name, files in [('extension', client), ('backend', backend)]:
